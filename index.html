@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מה אסף היה אומר?</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, serif;
+      direction: rtl;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fde8f0 0%, #f3e8fd 40%, #e8f0fd 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .floating-item {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      filter: saturate(0.7);
+    }
+    @keyframes float-a {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-18px) rotate(8deg); }
+    }
+    @keyframes float-b {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(-6deg); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .header .emoji { font-size: 48px; margin-bottom: 12px; }
+    .header h1 { font-size: 28px; font-weight: bold; color: #2d1a3a; }
+    .header p { color: #4a3060; margin-top: 8px; font-size: 14px; font-weight: 500; }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.9);
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+      margin-top: 0;
+    }
+    .card + .card { margin-top: 24px; }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4a3060;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      resize: none;
+      border-radius: 12px;
+      border: 1px solid #d0b8e8;
+      background: rgba(255,255,255,0.9);
+      padding: 12px 16px;
+      font-size: 15px;
+      color: #1a0a2e;
+      outline: none;
+      font-family: Georgia, serif;
+    }
+    .btn-main {
+      margin-top: 16px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: #1a0a2e;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      font-family: Georgia, serif;
+      letter-spacing: 0.03em;
+    }
+    .btn-main:disabled { background: #c8b8d8; cursor: not-allowed; }
+    .btn-outline {
+      margin-top: 10px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.7);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: Georgia, serif;
+      border: 2px solid;
+    }
+    .btn-gaga { color: #c084e8; border-color: #c084e8; }
+    .btn-song { color: #a855f7; border-color: #a855f7; }
+    .btn-photo { color: #e879a0; border-color: #e879a0; }
+    .btn-video { color: #7c3aed; border-color: #7c3aed; }
+    .card-dark {
+      background: linear-gradient(135deg, #2d1a3a, #4a1a5e);
+      border: none;
+    }
+    .card-dark p { color: white; font-size: 16px; line-height: 1.7; font-style: italic; direction: ltr; text-align: left; }
+    .response-text { color: #1a0a2e; font-size: 17px; line-height: 1.7; white-space: pre-wrap; }
+    .tag { font-size: 11px; font-weight: 700; color: #4a3060; text-transform: uppercase; letter-spacing: 0.1em; }
+    .tag-light { color: #c084e8; }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #c084e8, #e879a0);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px; font-weight: bold;
+      flex-shrink: 0;
+    }
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .dots { display: flex; gap: 6px; padding: 8px 0; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #c084e8;
+      animation: bounce 0.6s ease-in-out infinite;
+    }
+    .footer { margin-top: 32px; color: #c8b8d8; font-size: 12px; position: relative; z-index: 1; }
+    #gaga-card, #response-card { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="emoji">🙄</div>
+    <h1>מה אסף היה אומר?</h1>
+    <p>אתם שואלים, אסף עונה</p>
+  </div>
+
+  <div class="card">
+    <label>כאן כותבים את השאלה או הסוגיה שתרצו שאסף יתייחס אליה</label>
+    <textarea id="input" rows="3" placeholder="למשל: ההנהלה הכריזה על חזון חדש לשנת 2026..."></textarea>
+    <button class="btn-main" id="ask-btn" onclick="askAsaf()">קבלו תשובה מאסף</button>
+    <button class="btn-outline btn-gaga" onclick="showGaga()">✨ קבל השראה</button>
+    <button class="btn-outline btn-song" onclick="openSong()">🎵 סתום ונגן שיר של גאגא</button>
+    <button class="btn-outline btn-photo" onclick="openPhoto()">📸 אסף רנדומלי</button>
+    <button class="btn-outline btn-video" onclick="openVideo()">🎬 סרטון של אסף</button>
+  </div>
+
+  <div class="card card-dark" id="gaga-card">
+    <div class="row">
+      <span style="font-size:20px">🎤</span>
+      <span class="tag tag-light">Lady Gaga אמרה</span>
+    </div>
+    <p id="gaga-text"></p>
+  </div>
+
+  <div class="card" id="response-card">
+    <div class="row">
+      <div class="avatar">א</div>
+      <span class="tag">אסף אומר</span>
+    </div>
+    <div id="response-content"></div>
+  </div>
+
+  <p class="footer">powered by cynicism & claude ✦</p>
+
+  <script>
+    const SYSTEM_PROMPT = `You are Asaf — a witty, hyper-cynical Israeli guy who works at a tech company. You respond ONLY in Hebrew (with occasional English slang mixed in naturally).
+
+PERSONALITY:
+- Deeply cynical about work, management, meetings, and corporate initiatives
+- Dramatic reactions to minor inconveniences ("הלם", "מזעזע", "מחריד")
+- Zero patience for bullshit: if something is boring you say "זה מעניין לי את הביצה"
+- Proudly gay, uses it as a punchline or perspective
+- Uses slang: "פיפי", "אמאלה", "גייז", "הומו", "משתין", "בוכה", "צורח"
+- Hates manager archetypes: "שרון", "איציק", "אילון", "נמרוד"
+- Short, punchy, dark humor. 2-5 sentences max. Never break character.`;
+
+    const ASAF_PHOTOS = [
+      "13DWAfEvM24kBsXpnJRiBYZwfJOs1QNFW",
+      "1vV8Pai3Pjy1sAOh2bgTGF-JdB_a83cum",
+      "1fChh2dVueWxtsCkZ1BXZUx5eaAxB0aRs",
+    ];
+
+    const ASAF_VIDEOS = [
+      "1nyCMXT5Qo5zghOjJ9mXXSnq8bZmGUwQE",
+    ];
+
+    const GAGA_SONGS = [
+      "Bad Romance","Poker Face","Shallow","Paparazzi","Telephone",
+      "Alejandro","Edge of Glory","Born This Way","Applause","Million Reasons",
+      "Just Dance","Judas","Always Remember Us This Way","Hair","Stupid Love",
+      "Yoü and I","LoveGame","Speechless","Marry the Night","Government Hooker",
+      "Dance in the Dark","Rain On Me","911","Hold My Hand","Free Woman",
+      "Bloody Mary","Die With A Smile","Abracadabra","Disease","Vanish Into You",
+    ];
+
+    const GAGA_QUOTES = [
+      "I had a boyfriend who told me I'd never succeed. I said: someday you won't be able to order coffee without hearing or seeing me.",
+      "Do not allow people to dim your shine because they are blinded by it.",
+      "You have to be unique, and different, and shine in your own way.",
+      "Some women follow men, some follow their dreams. Your career will never wake up and say it doesn't love you anymore.",
+      "I believe in a glamorous life. I deserve it. I've worked hard for it.",
+      "At the end of the day, you won't be happy until you love yourself.",
+      "Fight and push harder for what you believe in — you are much stronger than you think.",
+      "I am my own sanctuary and I can be reborn as many times as I choose.",
+      "People will always talk, so let's give them something to talk about.",
+      "Be yourself — whether you're gay, straight, bi, transgender — just be you.",
+      "I don't want to make money. I want to make a difference.",
+      "The most important thing is to never give up, even if people don't believe in you.",
+      "I've always been famous, it's just no one knew it yet.",
+      "Love is like a brick. You can build a house, or you can sink a dead body.",
+      "Ignore all hatred and criticism. Live for what you create, and die protecting it.",
+      "I used to walk down the street like I was a fucking star — and then I fought so hard the delusion became real.",
+      "Hair is the greatest thing in the world. It changes how you feel about yourself.",
+      "Peace begins with a smile.",
+      "After love comes heartbreak, after heartbreak comes strength.",
+      "I am my own muse. I am the subject I know best.",
+    ];
+
+    const FASHION_ITEMS = ["👗","👠","🧥","👒","💄","👜","💍","🕶️","🧣","👡","💅","🌂","🧤","👘","💎"];
+    let history = [];
+
+    // Generate floating items
+    for (let i = 0; i < 22; i++) {
+      const el = document.createElement("div");
+      el.className = "floating-item";
+      el.textContent = FASHION_ITEMS[i % FASHION_ITEMS.length];
+      const size = 16 + Math.random() * 22;
+      const dur = 4 + Math.random() * 5;
+      const delay = Math.random() * 4;
+      el.style.cssText = `
+        left: ${Math.random() * 95}%;
+        top: ${Math.random() * 95}%;
+        font-size: ${size}px;
+        opacity: ${0.12 + Math.random() * 0.15};
+        animation: ${Math.random() > 0.5 ? "float-a" : "float-b"} ${dur}s ease-in-out ${delay}s infinite;
+      `;
+      document.body.appendChild(el);
+    }
+
+    document.getElementById("input").addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askAsaf(); }
+    });
+
+    async function askAsaf() {
+      const input = document.getElementById("input").value.trim();
+      if (!input) return;
+      const btn = document.getElementById("ask-btn");
+      btn.disabled = true;
+      btn.textContent = "אסף חושב... (זה יוצא מהרגיל)";
+
+      const responseCard = document.getElementById("response-card");
+      const responseContent = document.getElementById("response-content");
+      responseCard.style.display = "block";
+      responseContent.innerHTML = '<div class="dots"><div class="dot" style="animation-delay:0s"></div><div class="dot" style="animation-delay:0.15s"></div><div class="dot" style="animation-delay:0.3s"></div></div>';
+
+      history.push({ role: "user", content: input });
+      if (history.length > 20) history = history.slice(-20);
+
+      try {
+        const res = await fetch("/api/claude", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1000,
+            system: SYSTEM_PROMPT,
+            messages: history,
+          }),
+        });
+        const data = await res.json();
+        const text = data.content?.map(b => b.text || "").join("") || "...";
+        history.push({ role: "assistant", content: text });
+        responseContent.innerHTML = `<p class="response-text">${text}</p>`;
+      } catch (e) {
+        responseContent.innerHTML = `<p class="response-text">משהו השתבש. כנראה הסרת גם את זה.</p>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = "קבלו תשובה מאסף";
+    }
+
+    function showGaga() {
+      const q = GAGA_QUOTES[Math.floor(Math.random() * GAGA_QUOTES.length)];
+      document.getElementById("gaga-text").textContent = q;
+      document.getElementById("gaga-card").style.display = "block";
+    }
+
+    function openSong() {
+      const song = GAGA_SONGS[Math.floor(Math.random() * GAGA_SONGS.length)];
+      window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent("Lady Gaga " + song + " official"), "_blank");
+    }
+
+    function openPhoto() {
+      const id = ASAF_PHOTOS[Math.floor(Math.random() * ASAF_PHOTOS.length)];
+      window.open("https://drive.google.com/file/d/" + id + "/view", "_blank");
+    }
+
+    function openVideo() {
+      const id = ASAF_VIDEOS[Math.floor(Math.random() * ASAF_VIDEOS.length)];
+      window.open("https://drive.google.com/file/d/" + id + "/view", "_blank");
+    }
+  </script>
+</body>
+</html>
